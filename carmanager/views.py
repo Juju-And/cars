@@ -30,7 +30,8 @@ class CarsView(View):
         )
         # TO DO - fix brand verification
         Car.objects.create(
-            car_make=car_make_json["Results"][0]["Make_Name"], model_name=model_name
+            car_make=car_make_json["Results"][0]["Make_Name"].upper(),
+            model_name=model_name.upper(),
         )
 
         return JsonResponse({"Message": "Car successfully added!"})
@@ -42,16 +43,16 @@ class CarsView(View):
             car_makes.append(result["Model_Name"].lower())
         try:
             car_makes.index(model_name.lower())
-        except:
-            raise Http404("Make car not found.")
+        except ValueError:
+            raise ValueError("Invalid make car.")
 
         car_models = []
         for result in car_make_json["Results"]:
             car_models.append(result["Model_Name"].lower())
         try:
             car_models.index(model_name.lower())
-        except:
-            raise Http404("Model name not found.")
+        except ValueError:
+            raise ValueError("Invalid model name.")
 
         return car_make_json
 
