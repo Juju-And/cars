@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from django.db.models import Avg
 from django.forms import model_to_dict
@@ -14,16 +14,7 @@ from carmanager.models import Car, Rate
 class CarsView(View):
     def get(self, request):
         cars = Car.objects.all()
-        cars_list = []
-        for car in cars:
-            single_car_rates = (
-                Rate.objects.filter(car=car).all().aggregate(Avg("rate_point"))
-            )
-            car_record = model_to_dict(car)
-            car_record.update(single_car_rates)
-            cars_list.append(car_record)
-
-        return JsonResponse(cars_list, safe=False)
+        return JsonResponse(generate_all_cars_list(cars), safe=False)
 
     def post(self, request):
         body_unicode = request.body.decode("utf-8")
@@ -46,15 +37,19 @@ class CarsView(View):
 
     @staticmethod
     def __validate_car_make_and_model(car_make_json: Dict[str, Any], model_name: str):
-
-        if len(car_make_json["Results"]) == 0:
+        car_makes = []
+        for result in car_make_json["Results"]:
+            car_makes.append(result["Model_Name"].lower())
+        try:
+            car_makes.index(model_name.lower())
+        except:
             raise Http404("Make car not found.")
 
         car_models = []
         for result in car_make_json["Results"]:
-            car_models.append(result["Model_Name"])
+            car_models.append(result["Model_Name"].lower())
         try:
-            car_models.index(model_name)
+            car_models.index(model_name.lower())
         except:
             raise Http404("Model name not found.")
 
@@ -83,3 +78,28 @@ class CarsRatingView(View):
     def __validate_rating(rate_point):
         if 0 > rate_point or rate_point > 5:
             raise ValidationError("Invalid rate value.")
+
+
+class CarsPopularityView(View):
+    def get(self, request):
+        cars = Car.objects.all()
+        cars_list = []
+        for car in cars:
+            total_rate_entries = Rate.objects.filter(car=car).count()
+            car_record = model_to_dict(car)
+            car_record["total_rate_entries"] = total_rate_entries
+            cars_list.append(car_record)
+        cars_sorted_list = sorted(
+            cars_list, key=lambda k: k["total_rate_entries"], reverse=True
+        )
+        return JsonResponse(cars_sorted_list, safe=False)
+
+
+def generate_all_cars_list(cars) -> List:
+    cars_list = []
+    for car in cars:
+        car_avg_rates = Rate.objects.filter(car=car).all().aggregate(Avg("rate_point"))
+        car_record = model_to_dict(car)
+        car_record.update(car_avg_rates)
+        cars_list.append(car_record)
+    return cars_list
