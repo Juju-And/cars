@@ -16,9 +16,11 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
-from carmanager.views import CarsView
+from carmanager.views import CarsView, CarsRatingView
 
 urlpatterns = [
     url(r"^admin/", admin.site.urls),
     url(r"^cars", CarsView.as_view()),
+    url(r"^rate", CarsRatingView.as_view()),
+
 ]
