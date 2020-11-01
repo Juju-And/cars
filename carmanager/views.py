@@ -77,7 +77,7 @@ class CarsRatingView(View):
 
     @staticmethod
     def __validate_rating(rate_point):
-        if 0 > rate_point or rate_point > 5:
+        if 1 > rate_point or rate_point > 5:
             raise ValidationError("Invalid rate value.")
 
 
