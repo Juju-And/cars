@@ -14,9 +14,16 @@ COPY ./scripts /scripts
 
 RUN chmod +x /scripts/*
 
-RUN adduser -D user
-USER user
+# copy project
+COPY . .
+
+# add and run as non-root user
+RUN adduser -D myuser
+USER myuser
+
+# run gunicorn
+CMD gunicorn carmanager.wsgi:application --bind 0.0.0.0:$PORT
 
 CMD ["entrypoint.sh"]
 
-CMD ["python", "manage.py" "runserver"]
+CMD ["python", "manage.py", "runserver"]
