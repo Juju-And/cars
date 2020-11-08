@@ -71,7 +71,7 @@ class CarsRatingView(View):
         car_id = body["car_id"]
         self.__validate_rating(rate_point)
 
-        car = Car.objects.filter(id=car_id).first()
+        car = self.__validate_car(car_id=car_id)
         Rate.objects.create(car=car, rate_point=rate_point)
 
         return JsonResponse(
@@ -84,6 +84,16 @@ class CarsRatingView(View):
     def __validate_rating(rate_point):
         if 1 > rate_point or rate_point > 5:
             raise ValidationError("Invalid rate value.")
+
+    @staticmethod
+    def __validate_car(car_id: int) -> Car:
+        try:
+            return Car.objects.get(id=car_id)
+        except Car.DoesNotExist:
+            raise HTTPExceptions.NOT_FOUND.with_content(
+                f"Car of id: {car_id} not found."
+            )
+        # return response
 
 
 class CarsPopularityView(View):

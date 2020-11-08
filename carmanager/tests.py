@@ -93,6 +93,18 @@ class CheckNumberTest(TestCase):
         with self.assertRaises(ValidationError):
             client.post("/rate", {"car_id": car_id, "rate_point": 6}, format="json")
 
+    def test_post_car_rate__when_invalid_car_id(self):
+        # given
+        client = APIClient()
+        car_id = 999
+
+        # when
+        response = client.post("/rate", {"car_id": car_id, "rate_point": 4}, format="json")
+
+        # then
+        self.assertEqual(404, response.status_code)
+        self.assertEqual(f"Car of id: {car_id} not found.", response.content.decode("utf-8"))
+
     def test_post_new_car__when_invalid_car_make(self):
         # given
         client = APIClient()
