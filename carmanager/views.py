@@ -5,6 +5,7 @@ from django.db.models import Avg
 from django.forms import model_to_dict
 from django.http import Http404, JsonResponse
 from django.views import View
+from django_http_exceptions import HTTPExceptions
 from pip._vendor import requests
 from rest_framework.exceptions import ValidationError
 
@@ -26,7 +27,7 @@ class CarsView(View):
         car_make_json = requests.get(car_make_url).json()
 
         self.__validate_car_make_and_model(
-            car_make_json=car_make_json, model_name=model_name
+            car_make_json=car_make_json, model_name=model_name, car_make=car_make
         )
         # TO DO - fix brand verification
         Car.objects.create(
@@ -37,14 +38,16 @@ class CarsView(View):
         return JsonResponse({"Message": "Car successfully added!"})
 
     @staticmethod
-    def __validate_car_make_and_model(car_make_json: Dict[str, Any], model_name: str):
+    def __validate_car_make_and_model(
+        car_make_json: Dict[str, Any], model_name: str, car_make: str
+    ):
         car_makes = []
         for result in car_make_json["Results"]:
-            car_makes.append(result["Model_Name"].lower())
+            car_makes.append(result["Make_Name"].lower())
         try:
-            car_makes.index(model_name.lower())
+            car_makes.index(car_make.lower())
         except ValueError:
-            raise ValueError("Invalid make car.")
+            raise HTTPExceptions.UNPROCESSABLE_ENTITY.with_content("Invalid car make.")
 
         car_models = []
         for result in car_make_json["Results"]:
@@ -52,7 +55,9 @@ class CarsView(View):
         try:
             car_models.index(model_name.lower())
         except ValueError:
-            raise ValueError("Invalid model name.")
+            raise HTTPExceptions.UNPROCESSABLE_ENTITY.with_content(
+                "Invalid model name."
+            )
 
         return car_make_json
 

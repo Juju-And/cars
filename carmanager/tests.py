@@ -1,6 +1,7 @@
 import json
 
 from django.test import TestCase
+from django_http_exceptions import HTTPExceptions
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
@@ -92,22 +93,25 @@ class CheckNumberTest(TestCase):
         with self.assertRaises(ValidationError):
             client.post("/rate", {"car_id": car_id, "rate_point": 6}, format="json")
 
-    def test_post_new_car__when_invalid_car_mark(self):
+    def test_post_new_car__when_invalid_car_make(self):
         # given
         client = APIClient()
 
         # when - then
-        with self.assertRaises(ValueError):
-            client.post(
-                "/cars", {"car_make": "aaaaaa", "model_name": "civic"}, format="json"
-            )
+        response = client.post(
+            "/cars", {"car_make": "aaaaaa", "model_name": "civic"}, format="json"
+        )
+        # then
+        self.assertEqual(422, response.status_code)
+        self.assertEqual("Invalid car make.", response.content.decode("utf-8"))
 
     def test_post_new_car__when_invalid_model_name(self):
         # given
         client = APIClient()
 
-        # when - then
-        with self.assertRaises(ValueError):
-            client.post(
-                "/cars", {"car_make": "honda", "model_name": "cevic"}, format="json"
-            )
+        # when
+        response = client.post(
+            "/cars", {"car_make": "honda", "model_name": "cevic"}, format="json"
+        )
+        self.assertEqual(422, response.status_code)
+        self.assertEqual("Invalid model name.", response.content.decode("utf-8"))
